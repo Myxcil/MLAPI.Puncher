@@ -22,7 +22,7 @@ namespace MLAPI.Puncher.Client
         /// Gets or sets the transport used to communicate with puncher server.
         /// </summary>
         /// <value>The transport used to communcate with puncher server.</value>
-        public IUDPTransport Transport { get; set; } = new SlimUDPTransport();
+        public IUDPTransport Transport { get; set; }
         /// <summary>
         /// Gets or sets the amount port predictions to attempt.
         /// </summary>

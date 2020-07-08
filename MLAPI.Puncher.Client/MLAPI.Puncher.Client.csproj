@@ -5,6 +5,7 @@
 
   <ItemGroup>
     <Folder Include="Exceptions\" />
+    <PackageReference Include="LiteNetLib" Version="0.8.3.1" />
   </ItemGroup>
   <Import Project="..\MLAPI.Puncher.Shared\MLAPI.Puncher.Shared.projitems" Label="Shared" Condition="Exists('..\MLAPI.Puncher.Shared\MLAPI.Puncher.Shared.projitems')" />
 </Project>

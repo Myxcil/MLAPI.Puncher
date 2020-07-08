@@ -23,7 +23,7 @@ namespace MLAPI.Puncher.Server
         /// Gets or sets the transport used to communicate with puncher clients.
         /// </summary>
         /// <value>The transport used to communcate with puncher clients.</value>
-        public IUDPTransport Transport { get; set; } = new SlimUDPTransport();
+        public IUDPTransport Transport { get; set; }
 
         /// <summary>
         /// Start a server bound to the specified endpoint.
@@ -31,6 +31,8 @@ namespace MLAPI.Puncher.Server
         /// <param name="endpoint">Endpoint.</param>
         public void Start(IPEndPoint endpoint)
         {
+            Console.WriteLine("starting, bind to " + endpoint.ToString());
+
             Transport.Bind(endpoint);
 
             _cleanupThread = new Thread(() =>
@@ -50,6 +52,7 @@ namespace MLAPI.Puncher.Server
 
                                 try
                                 {
+                                    Console.WriteLine("removing " + client.EndPoint.ToString());
                                     _listenerClients.Remove(client.EndPoint.Address);
                                 }
                                 finally
@@ -110,6 +113,8 @@ namespace MLAPI.Puncher.Server
                 {
                     if (_listenerClients.TryGetValue(senderAddress, out Client client))
                     {
+                        Console.WriteLine("updating " + senderAddress.ToString());
+
                         _listenerClientsLock.EnterWriteLock();
 
                         try
@@ -126,6 +131,8 @@ namespace MLAPI.Puncher.Server
                     }
                     else
                     {
+                        Console.WriteLine("adding " + senderAddress.ToString());
+
                         _listenerClientsLock.EnterWriteLock();
 
                         try

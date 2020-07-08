@@ -1,9 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\MLAPI.Puncher.Server\MLAPI.Puncher.Server.csproj" />
+    <PackageReference Include="LiteNetLib" Version="0.8.3.1" />
   </ItemGroup>
 </Project>
