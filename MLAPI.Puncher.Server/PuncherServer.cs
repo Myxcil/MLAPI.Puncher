@@ -32,7 +32,6 @@ namespace MLAPI.Puncher.Server
         public void Start(IPEndPoint endpoint)
         {
             Console.WriteLine("starting, bind to " + endpoint.ToString());
-
             Transport.Bind(endpoint);
 
             _cleanupThread = new Thread(() =>
@@ -43,24 +42,35 @@ namespace MLAPI.Puncher.Server
 
                     try
                     {
+                        List<IPAddress> addressesToRemove = new List<IPAddress>();
+
                         foreach (Client client in _listenerClients.Values)
                         {
                             // Make them expire after 120 seconds
                             if ((DateTime.Now - client.LastRegisterTime).TotalSeconds > 120)
                             {
-                                _listenerClientsLock.EnterWriteLock();
-
-                                try
-                                {
-                                    Console.WriteLine("removing " + client.EndPoint.ToString());
-                                    _listenerClients.Remove(client.EndPoint.Address);
-                                }
-                                finally
-                                {
-                                    _listenerClientsLock.ExitWriteLock();
-                                }
+                                addressesToRemove.Add(client.EndPoint.Address);
                             }
                         }
+
+
+                        if (addressesToRemove.Count > 0)
+                        {
+                            _listenerClientsLock.EnterWriteLock();
+
+                            try
+                            {
+                                for (int i = 0; i < addressesToRemove.Count; i++)
+                                {
+                                    _listenerClients.Remove(addressesToRemove[i]);
+                                }
+                            }
+                            finally
+                            {
+                                _listenerClientsLock.ExitWriteLock();
+                            }
+                        }
+
                     }
                     finally
                     {
@@ -114,7 +124,6 @@ namespace MLAPI.Puncher.Server
                     if (_listenerClients.TryGetValue(senderAddress, out Client client))
                     {
                         Console.WriteLine("updating " + senderAddress.ToString());
-
                         _listenerClientsLock.EnterWriteLock();
 
                         try
@@ -132,7 +141,6 @@ namespace MLAPI.Puncher.Server
                     else
                     {
                         Console.WriteLine("adding " + senderAddress.ToString());
-
                         _listenerClientsLock.EnterWriteLock();
 
                         try
