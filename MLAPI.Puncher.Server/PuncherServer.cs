@@ -31,7 +31,7 @@ namespace MLAPI.Puncher.Server
         /// <param name="endpoint">Endpoint.</param>
         public void Start(IPEndPoint endpoint)
         {
-            Console.WriteLine("starting, bind to " + endpoint.ToString());
+            Console.WriteLine(string.Format("{0}: starting, bind to {1}", DateTime.Now, endpoint));
             Transport.Bind(endpoint);
 
             _cleanupThread = new Thread(() =>
@@ -123,7 +123,7 @@ namespace MLAPI.Puncher.Server
                 {
                     if (_listenerClients.TryGetValue(senderAddress, out Client client))
                     {
-                        Console.WriteLine("updating " + senderAddress.ToString());
+                        Console.WriteLine(string.Format("{0}: updating {1}", DateTime.Now, senderAddress));
                         _listenerClientsLock.EnterWriteLock();
 
                         try
@@ -140,7 +140,7 @@ namespace MLAPI.Puncher.Server
                     }
                     else
                     {
-                        Console.WriteLine("adding " + senderAddress.ToString());
+                        Console.WriteLine(string.Format("{0}: adding {1}", DateTime.Now, senderAddress));
                         _listenerClientsLock.EnterWriteLock();
 
                         try
