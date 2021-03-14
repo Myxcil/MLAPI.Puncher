@@ -10,6 +10,7 @@
         /// </summary>
         Register,
         Registered,
+        Unregister,
         /// <summary>
         /// Sent by server to inform the listening and connecting client to knock on each others NAT.
         /// </summary>

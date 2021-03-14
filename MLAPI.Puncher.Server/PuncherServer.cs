@@ -105,7 +105,8 @@ namespace MLAPI.Puncher.Server
                 return;
             }
 
-            if (_buffer[0] != (byte)MessageType.Register)
+            if (_buffer[0] != (byte)MessageType.Register &&
+                _buffer[0] != (byte)MessageType.Unregister)
             {
                 return;
             }
@@ -114,6 +115,7 @@ namespace MLAPI.Puncher.Server
             byte registerFlags = _buffer[1];
             bool isConnector = (registerFlags & 1) == 1;
             bool isListener = ((registerFlags >> 1) & 1) == 1;
+            bool isRemoval = _buffer[0] == (byte)MessageType.Unregister;
 
             if (isListener)
             {
@@ -121,41 +123,61 @@ namespace MLAPI.Puncher.Server
 
                 try
                 {
-                    if (_listenerClients.TryGetValue(senderAddress, out Client client))
+                    if (!isRemoval)
                     {
-                        Console.WriteLine(string.Format("{0}: updating {1}", DateTime.Now, senderAddress));
-                        _listenerClientsLock.EnterWriteLock();
+                        if (_listenerClients.TryGetValue(senderAddress, out Client client))
+                        {
+                            Console.WriteLine(string.Format("{0}: updating {1}", DateTime.Now, senderAddress));
+                            _listenerClientsLock.EnterWriteLock();
 
-                        try
-                        {
-                            client.EndPoint = senderEndpoint;
-                            client.IsConnector = isConnector;
-                            client.IsListener = isListener;
-                            client.LastRegisterTime = DateTime.Now;
+                            try
+                            {
+                                client.EndPoint = senderEndpoint;
+                                client.IsConnector = isConnector;
+                                client.IsListener = isListener;
+                                client.LastRegisterTime = DateTime.Now;
+                            }
+                            finally
+                            {
+                                _listenerClientsLock.ExitWriteLock();
+                            }
                         }
-                        finally
+                        else
                         {
-                            _listenerClientsLock.ExitWriteLock();
+                            Console.WriteLine(string.Format("{0}: adding {1}", DateTime.Now, senderAddress));
+                            _listenerClientsLock.EnterWriteLock();
+
+                            try
+                            {
+                                _listenerClients.Add(senderAddress, new Client()
+                                {
+                                    EndPoint = senderEndpoint,
+                                    IsConnector = isConnector,
+                                    IsListener = isListener,
+                                    LastRegisterTime = DateTime.Now
+                                });
+                            }
+                            finally
+                            {
+                                _listenerClientsLock.ExitWriteLock();
+                            }
                         }
                     }
                     else
                     {
-                        Console.WriteLine(string.Format("{0}: adding {1}", DateTime.Now, senderAddress));
-                        _listenerClientsLock.EnterWriteLock();
+                        if (_listenerClients.TryGetValue(senderAddress, out Client client))
+                        {
+                            Console.WriteLine(string.Format("{0}: removing {1}", DateTime.Now, senderAddress));
+                            _listenerClientsLock.EnterWriteLock();
 
-                        try
-                        {
-                            _listenerClients.Add(senderAddress, new Client()
+                            try
                             {
-                                EndPoint = senderEndpoint,
-                                IsConnector = isConnector,
-                                IsListener = isListener,
-                                LastRegisterTime = DateTime.Now
-                            });
-                        }
-                        finally
-                        {
-                            _listenerClientsLock.ExitWriteLock();
+                                _listenerClients.Remove(senderAddress);
+                            }
+                            finally
+                            {
+                                _listenerClientsLock.ExitWriteLock();
+                            }
                         }
                     }
                 }
@@ -164,14 +186,17 @@ namespace MLAPI.Puncher.Server
                     _listenerClientsLock.ExitUpgradeableReadLock();
                 }
 
-                // Prevent info leaks
-                Array.Clear(_buffer, 0, _buffer.Length);
+                if (!isRemoval)
+                {
+                    // Prevent info leaks
+                    Array.Clear(_buffer, 0, _buffer.Length);
 
-                // Write message type
-                _buffer[0] = (byte)MessageType.Registered;
+                    // Write message type
+                    _buffer[0] = (byte)MessageType.Registered;
 
-                // Send to listener
-                Transport.SendTo(_buffer, 0, _buffer.Length, -1, senderEndpoint);
+                    // Send to listener
+                    Transport.SendTo(_buffer, 0, _buffer.Length, -1, senderEndpoint);
+                }
             }
 
             if (isConnector)

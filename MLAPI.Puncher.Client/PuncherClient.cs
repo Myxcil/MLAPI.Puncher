@@ -139,6 +139,11 @@ namespace MLAPI.Puncher.Client
             return endpoint;
         }
 
+        public void DisconnectListener()
+        {
+            SendUnregisterRequestForListener();
+        }
+
         /// <summary>
         /// Starts punching the requested peer.
         /// </summary>
@@ -250,6 +255,29 @@ namespace MLAPI.Puncher.Client
             }
         }
 
+        private void SendUnregisterRequestForListener()
+        {
+            // Prevent info leaks
+            Array.Clear(_buffer, 0, Constants.BUFFER_SIZE);
+
+            // Write message type
+            _buffer[0] = (byte)MessageType.Unregister;
+
+            // Set flag byte
+            _buffer[1] = 2;
+
+            for (int i = 0; i < _puncherServerEndpoints.Length; i++)
+            {
+                // Send register
+                int size = Transport.SendTo(_buffer, 0, Constants.BUFFER_SIZE, SocketSendTimeout, _puncherServerEndpoints[i]);
+
+                if (size != Constants.BUFFER_SIZE)
+                {
+                    throw new SocketSendException("Could not send Register packet on socket");
+                }
+            }
+        }
+        
         // Sends punches and punch predictions
         private void SendPunches(IPEndPoint punchEndpoint, ArraySegment<byte> token)
         {
